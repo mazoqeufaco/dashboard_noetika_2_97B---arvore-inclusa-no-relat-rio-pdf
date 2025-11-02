@@ -3,11 +3,11 @@
 FROM node:18-slim
 
 # Instala Python 3.11 e ferramentas necessárias
+# Nota: Não fazemos upgrade do pip aqui para evitar erro PEP 668
 RUN apt-get update && \
     apt-get install -y python3.11 python3.11-dev python3-pip python3.11-venv curl build-essential && \
     ln -sf /usr/bin/python3.11 /usr/bin/python && \
     ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
-    python3.11 -m pip install --upgrade pip --break-system-packages && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
