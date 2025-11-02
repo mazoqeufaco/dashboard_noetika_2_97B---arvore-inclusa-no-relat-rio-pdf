@@ -17,7 +17,16 @@ p { text-align:center; font-size:14px; margin:0 8px 18px; color:var(--text); }
 
 .wrap { max-width: 1100px; margin: 0 auto; padding: 8px 16px 24px; }
 .tri-wrap { position: relative; width: 100%; max-width: 900px; margin: 0 auto; }
-#tri { display:block !important; width:100%; max-width:900px; height:620px !important; background:#000; border:1px solid #222; border-radius:12px; }
+#tri { 
+  display:block !important; 
+  width:100%; 
+  max-width:900px; 
+  aspect-ratio: 900 / 620; /* Mantém proporção equilátera do triângulo */
+  height: auto !important; /* Permite que altura se ajuste proporcionalmente */
+  background:#000; 
+  border:1px solid #222; 
+  border-radius:12px; 
+}
 /* Responsividade para telas pequenas */
 @media (max-width: 768px) {
   #tri { max-width: 100%; }
