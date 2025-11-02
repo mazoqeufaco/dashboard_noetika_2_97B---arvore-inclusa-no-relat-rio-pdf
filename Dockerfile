@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y python3.11 python3.11-dev python3-pip python3.11-venv curl build-essential && \
     ln -sf /usr/bin/python3.11 /usr/bin/python && \
     ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
-    python3.11 -m pip install --upgrade pip && \
+    python3.11 -m pip install --upgrade pip --break-system-packages && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -24,8 +24,8 @@ WORKDIR /app
 COPY requirements.txt package*.json ./
 
 # Instala dependências Python (usa python3 explicitamente)
-RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    python3 -m pip install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel --break-system-packages && \
+    python3 -m pip install --no-cache-dir -r requirements.txt --break-system-packages
 
 # Verifica se Flask e outras dependências foram instaladas
 RUN python3 -c "import flask; print('✅ Flask:', flask.__version__)" && \
