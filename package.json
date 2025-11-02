@@ -9,7 +9,7 @@
     "start:simple": "node server-simple.js",
     "start:py": "python -m http.server 8000",
     "kill-port": "node kill-port.js 8000",
-    "build": "echo 'No build step required'"
+    "build": "echo 'Build handled by Railway Nixpacks'"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0"
