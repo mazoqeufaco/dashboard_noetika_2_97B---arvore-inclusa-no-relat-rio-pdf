@@ -1,17 +1,21 @@
-# Dockerfile para Railway - FORÇA REBUILD COMPLETO
-# Last updated: 2025-11-02
-FROM python:3.11-slim
+# Dockerfile para Railway
+# Usa imagem oficial do Node.js e adiciona Python
+FROM node:18-slim
 
-# Atualiza pacotes e instala dependências necessárias
+# Instala Python 3.11 e ferramentas necessárias
 RUN apt-get update && \
-    apt-get install -y curl gnupg && \
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
+    apt-get install -y python3.11 python3.11-dev python3-pip python3.11-venv curl build-essential && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    python3.11 -m pip install --upgrade pip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Verifica instalação do Node.js e mostra o caminho
-RUN node --version && npm --version && which node
+# Verifica instalações e caminhos
+RUN node --version && npm --version && \
+    python --version && python3 --version && \
+    which python && which python3 && \
+    pip --version && pip3 --version
 
 # Define diretório de trabalho
 WORKDIR /app
@@ -19,8 +23,15 @@ WORKDIR /app
 # Copia arquivos de dependências
 COPY requirements.txt package*.json ./
 
-# Instala dependências Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Instala dependências Python (usa python3 explicitamente)
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    python3 -m pip install --no-cache-dir -r requirements.txt
+
+# Verifica se Flask e outras dependências foram instaladas
+RUN python3 -c "import flask; print('✅ Flask:', flask.__version__)" && \
+    python3 -c "import flask_cors; print('✅ Flask-CORS instalado')" && \
+    python3 -c "import waitress; print('✅ Waitress instalado')" && \
+    echo "✅ Todas as dependências Python verificadas"
 
 # Instala dependências Node.js
 RUN npm install --production
