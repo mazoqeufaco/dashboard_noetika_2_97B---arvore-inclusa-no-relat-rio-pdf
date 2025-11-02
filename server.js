@@ -7,7 +7,8 @@ const path = require('path');
 const BACKEND_PORT = 5000;
 const BACKEND_HOST = 'localhost';
 
-const DEFAULT_PORT = 8000;
+// Usa PORT do ambiente (Railway) ou padrão 8000 para desenvolvimento
+const DEFAULT_PORT = process.env.PORT || 8000;
 const MAX_PORT_TRIES = 10; // Tenta até 10 portas alternativas
 
 // Usa o diretório onde server.js está localizado
@@ -136,12 +137,16 @@ function createServer() {
 function startServer(port) {
   const server = createServer();
   
-  server.listen(port, () => {
-    console.log(`\n✅ Servidor rodando em http://localhost:${port}`);
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`\n✅ Servidor rodando em http://0.0.0.0:${port}`);
     console.log(`📁 Diretório: ${projectDir}`);
     console.log(`🔌 API proxy: /api/* → http://${BACKEND_HOST}:${BACKEND_PORT}`);
-    console.log(`\n⚠️  Certifique-se de que o backend Python está rodando na porta ${BACKEND_PORT}`);
-    console.log(`   Execute: python backend.py\n`);
+    if (!process.env.PORT) {
+      console.log(`\n⚠️  Certifique-se de que o backend Python está rodando na porta ${BACKEND_PORT}`);
+      console.log(`   Execute: python backend.py\n`);
+    } else {
+      console.log(`\n✅ Modo produção (Railway)\n`);
+    }
   });
 
   // Trata erros
