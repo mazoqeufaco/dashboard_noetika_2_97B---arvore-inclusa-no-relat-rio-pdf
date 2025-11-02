@@ -737,24 +737,27 @@ Este email contém o relatório PDF em anexo.
 if __name__ == '__main__':
     import sys
     
+    # Porta do backend (sempre 5000 internamente para comunicação com Node.js)
+    BACKEND_PORT = int(os.getenv('BACKEND_PORT', 5000))
+    
     # Verifica se é desenvolvimento ou produção
-    is_production = os.getenv('FLASK_ENV') == 'production' or os.getenv('ENVIRONMENT') == 'production'
+    is_production = os.getenv('FLASK_ENV') == 'production' or os.getenv('ENVIRONMENT') == 'production' or os.getenv('PORT')
     
     if is_production:
         # Produção: usa Waitress (servidor WSGI)
         from waitress import serve
         print("🚀 Starting Noetika Tracking Backend (PRODUCTION)...")
-        print("📊 Server running at http://0.0.0.0:5000")
+        print(f"📊 Server running at http://0.0.0.0:{BACKEND_PORT}")
         print("💾 Data will be saved to:", DATA_DIR.absolute())
         print("✅ Using Waitress WSGI server (production-ready)\n")
-        serve(app, host='0.0.0.0', port=5000, threads=4)
+        serve(app, host='0.0.0.0', port=BACKEND_PORT, threads=4)
     else:
         # Desenvolvimento: usa servidor embutido do Flask
         print("🚀 Starting Noetika Tracking Backend (DEVELOPMENT)...")
-        print("📊 Server running at http://localhost:5000")
+        print(f"📊 Server running at http://localhost:{BACKEND_PORT}")
         print("💾 Data will be saved to:", DATA_DIR.absolute())
         print("\n⚠️  WARNING: Development server - not for production!")
         print("   For production, set: FLASK_ENV=production")
-        print("   Or use: waitress-serve --host=0.0.0.0 --port=5000 backend:app\n")
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        print(f"   Or use: waitress-serve --host=0.0.0.0 --port={BACKEND_PORT} backend:app\n")
+        app.run(debug=True, host='0.0.0.0', port=BACKEND_PORT)
 

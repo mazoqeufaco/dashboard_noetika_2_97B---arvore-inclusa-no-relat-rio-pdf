@@ -11,6 +11,21 @@ export const DEFAULTS = {
   }
 };
 
+// Função para ajustar dimensões do canvas mantendo proporção 900:620
+function resizeCanvas(canvas) {
+  const container = canvas.parentElement;
+  const containerWidth = container.clientWidth;
+  const aspectRatio = 900 / 620; // Proporção original do triângulo
+  const canvasWidth = Math.min(containerWidth, 900);
+  const canvasHeight = Math.round(canvasWidth / aspectRatio);
+  
+  // Ajusta dimensões internas do canvas (importante para qualidade de renderização)
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  
+  return { width: canvasWidth, height: canvasHeight };
+}
+
 const area=(ax,ay,bx,by,cx,cy)=>(bx-ax)*(cy-ay)-(cx-ax)*(by-ay);
 function barycentric(px,py,A,B,C){ const d=area(A.x,A.y,B.x,B.y,C.x,C.y);
   const w1=area(px,py,B.x,B.y,C.x,C.y)/d, w2=area(px,py,C.x,C.y,A.x,A.y)/d, w3=1-w1-w2; return [w1,w2,w3]; }
@@ -113,6 +128,43 @@ export async function initEntrada(opts={}){
   const dlgOk=document.querySelector(cfg.ui.confirmOkSel);
   const dlgReset=document.querySelector(cfg.ui.confirmResetSel);
 
+  // Ajusta dimensões do canvas inicialmente
+  resizeCanvas(canvas);
+
+  // Variáveis para armazenar estado do triângulo (serão atualizadas após carregar imagem)
+  let rect, Vtop, Vleft, Vright, rgb=[1/3,1/3,1/3];
+
+  // Função para recalcular posicionamento do triângulo
+  const recalculateLayout = () => {
+    resizeCanvas(canvas);
+    const padTop=30,padBottom=30;
+    const maxW=canvas.width-40, maxH=canvas.height-padTop-padBottom;
+    if (img && img.complete && img.naturalWidth > 0) {
+      const scale=Math.min(maxW/img.naturalWidth, maxH/img.naturalHeight) * 0.7;
+      const w=Math.round(img.naturalWidth*scale), h=Math.round(img.naturalHeight*scale);
+      const x=Math.floor((canvas.width-w)/2);
+      const y=padTop + Math.floor((canvas.height - padTop - padBottom - h) * 0.5);
+      rect={x,y,w,h};
+      const v=detectVerticesByAlpha(img,w,h);
+      Vtop={x:x+v.top.x,y:y+v.top.y};
+      Vleft={x:x+v.left.x,y:y+v.left.y};
+      Vright={x:x+v.right.x,y:y+v.right.x};
+      // Redesenha após recalcular
+      if (rgb.length === 3) {
+        const [wt,wl,wr]=rgbToBary(rgb,cfg.vertexToChannel);
+        const px=wt*Vtop.x+wl*Vleft.x+wr*Vright.x, py=wt*Vtop.y+wl*Vleft.y+wr*Vright.y;
+        drawScene(ctx,canvas,img,rect,[px,py]);
+      }
+    }
+  };
+
+  // Listener para redimensionamento da janela
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(recalculateLayout, 250);
+  });
+
   const img=new Image();
   // Não usa crossOrigin para arquivos locais (pode causar problemas no Chrome)
   // img.crossOrigin = 'anonymous'; // Removido - não necessário para arquivos do mesmo servidor
@@ -149,21 +201,24 @@ export async function initEntrada(opts={}){
     img.src=cfg.imgSrc;
   });
 
+  // Recalcula layout após imagem carregar (e ajusta canvas novamente se necessário)
+  resizeCanvas(canvas);
   const padTop=30,padBottom=30; // Padding equilibrado
   const maxW=canvas.width-40, maxH=canvas.height-padTop-padBottom;
-  const scale=Math.min(maxW/img.width, maxH/img.height) * 0.7; // 70% do box inteiro
-  const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+  const scale=Math.min(maxW/img.naturalWidth, maxH/img.naturalHeight) * 0.7; // 70% do box inteiro
+  const w=Math.round(img.naturalWidth*scale), h=Math.round(img.naturalHeight*scale);
   const x=Math.floor((canvas.width-w)/2);
   // Posiciona o triângulo um pouco mais para baixo para equilibrar espaçamentos
   const y=padTop + Math.floor((canvas.height - padTop - padBottom - h) * 0.5);
-  const rect={x,y,w,h};
+  rect={x,y,w,h};
 
   const v=detectVerticesByAlpha(img,w,h);
-  const Vtop={x:x+v.top.x,y:y+v.top.y};
-  const Vleft={x:x+v.left.x,y:y+v.left.y};
-  const Vright={x:x+v.right.x,y:y+v.right.y};
+  Vtop={x:x+v.top.x,y:y+v.top.y};
+  Vleft={x:x+v.left.x,y:y+v.left.y};
+  Vright={x:x+v.right.x,y:y+v.right.y};
 
-  let rgb=[1/3,1/3,1/3]; let dragging=false; let updatingInputs=false;
+  let dragging=false; let updatingInputs=false;
+  rgb=[1/3,1/3,1/3];
 
   const drawFromRGB=()=>{ const [wt,wl,wr]=rgbToBary(rgb,cfg.vertexToChannel);
     const px=wt*Vtop.x+wl*Vleft.x+wr*Vright.x, py=wt*Vtop.y+wl*Vleft.y+wr*Vright.y;
